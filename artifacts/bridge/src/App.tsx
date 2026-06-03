@@ -15,6 +15,7 @@ import { Security } from './components/Security';
 import { ApiDocs } from './components/ApiDocs';
 import { AILogoMarquee } from './components/AILogoMarquee';
 import { PdfEditor } from './components/PdfEditor';
+import { ContinueModal } from './components/ContinueModal';
 import { vaultDbTools } from './lib/vaultDb';
 import { Toaster, toast } from 'sonner';
 
@@ -242,6 +243,7 @@ export default function App() {
   const [inputMode, setInputMode] = useState<'file' | 'link'>('link');
   const [shareLink, setShareLink] = useState('');
   const [showExtensionModal, setShowExtensionModal] = useState(false);
+  const [showContinueModal, setShowContinueModal] = useState(false);
   const [hasSeenExtensionPrompt, setHasSeenExtensionPrompt] = useState(() =>
     typeof window !== 'undefined' && !!localStorage.getItem('bridge_ext_prompt_seen')
   );
@@ -625,6 +627,7 @@ export default function App() {
     <div className={`min-h-screen flex flex-col overflow-x-hidden transition-colors duration-300 ${theme === 'dark' ? 'dark bg-[#0a0a0a] text-zinc-100 selection:bg-zinc-800 selection:text-white relative' : 'bg-white text-zinc-900 selection:bg-zinc-200 selection:text-black relative'}`}>
       <Toaster position="bottom-right" richColors theme={theme} />
       <DonationModal isOpen={showDonationModal} onClose={() => setShowDonationModal(false)} />
+      {chatData && <ContinueModal isOpen={showContinueModal} onClose={() => setShowContinueModal(false)} chatData={chatData} />}
       {showPdfEditor && chatData && <PdfEditor chatData={chatData} onClose={() => setShowPdfEditor(false)} />}
 
       {/* Background gradient */}
@@ -1051,7 +1054,14 @@ export default function App() {
                 <motion.div key="results" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-3xl mt-8">
                   <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
                     <h3 className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-bold bg-zinc-100 dark:bg-zinc-900 px-3 py-1 rounded inline-flex">Bridged Conversion</h3>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setShowContinueModal(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-700 dark:hover:bg-zinc-200 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg hover:-translate-y-0.5 hover:shadow-xl"
+                      >
+                        <ExternalLink size={12} />
+                        Continue
+                      </button>
                       <button onClick={() => { setChatData(null); setHtmlFile(null); setShareLink(''); setInputMode('file'); }} className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 hover:text-red-500 flex items-center gap-1.5 transition-colors font-bold">
                         <Trash2 size={12} /> Clear Bridge
                       </button>
