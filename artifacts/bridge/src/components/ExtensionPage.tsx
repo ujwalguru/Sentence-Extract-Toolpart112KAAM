@@ -101,6 +101,18 @@ export function ExtensionPage() {
               <p className="text-zinc-600 dark:text-zinc-400 mb-6">
                 The extension will automatically connect to Seamless Bridge! You don't need to manually copy or paste any ID.
               </p>
+
+              <div className="bg-blue-500/5 border border-blue-500/15 rounded-xl p-4 mb-6 max-w-xl">
+                <p className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2">✦ How "Continue With" works</p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  When you click <strong className="text-zinc-800 dark:text-zinc-200">ChatGPT</strong>, <strong className="text-zinc-800 dark:text-zinc-200">Grok</strong>, or any platform in the popup's <em>Continue With</em> section, the extension automatically generates a public bridge link for your conversation and copies a short passage containing only that link — no full chat text. Just paste it into the new AI and it picks up right where you left off.
+                </p>
+                <div className="mt-3 bg-zinc-900/80 dark:bg-black/60 rounded-lg p-3 font-mono text-xs text-zinc-300 leading-relaxed border border-white/5">
+                  <span className="text-zinc-500">// What gets copied to your clipboard:</span><br />
+                  I had the following conversation with ChatGPT. Please read it carefully and continue from where it left off...<br /><br />
+                  Full conversation: <span className="text-blue-400">https://seamlessbridge.replit.app/paste/abc123</span>
+                </div>
+              </div>
               
               <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-xl p-4 border border-zinc-200 dark:border-white/5 max-w-sm">
                 <div className="flex flex-col gap-3">

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Seamless Bridge</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a0a;
+    color: #fff;
+    width: 340px;
+    min-height: 200px;
+    max-height: 620px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    background: #111;
+  }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: #fff;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .logo-text { font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.2; }
+  .logo-sub { font-size: 7px; color: #666; letter-spacing: 0.15em; text-transform: uppercase; }
+  .platform-badge {
+    font-size: 9px; font-weight: 800; letter-spacing: 0.15em;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 3px 8px; border-radius: 4px;
+    text-transform: uppercase;
+    color: #ccc;
+  }
+
+  /* ── Status bar ── */
+  .status-bar {
+    padding: 8px 14px;
+    font-size: 10px;
+    color: #888;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: #0d0d0d;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #888; flex-shrink: 0; }
+  .status-dot.green { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+  .status-dot.orange { background: #f97316; }
+  .status-count { font-weight: 700; color: #fff; }
+
+  /* ── Content scroll ── */
+  .content { overflow-y: auto; flex: 1; }
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+  /* ── Chat title ── */
+  .chat-title {
+    padding: 10px 14px 6px;
+    font-size: 11px; font-weight: 700;
+    color: #e5e5e5;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ── Message preview ── */
+  .messages { padding: 0; }
+  .msg {
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  .msg-role {
+    font-size: 8px; font-weight: 800; letter-spacing: 0.15em;
+    text-transform: uppercase; color: #555; margin-bottom: 3px;
+  }
+  .msg.user .msg-role { color: #6ee7b7; }
+  .msg.assistant .msg-role { color: #93c5fd; }
+  .msg-content { color: #aaa; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  /* ── Section header ── */
+  .section-header {
+    padding: 10px 14px 6px;
+    font-size: 8px; font-weight: 800; letter-spacing: 0.2em;
+    text-transform: uppercase; color: #444;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* ── Platform grid ── */
+  .platform-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    padding: 0 14px 10px;
+  }
+  .platform-btn {
+    background: #1a1a1a;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 8px 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+    color: #bbb;
+  }
+  .platform-btn:hover { background: #222; border-color: rgba(255,255,255,0.2); color: #fff; transform: translateY(-1px); }
+  .platform-btn:active { transform: translateY(0); }
+  .platform-btn.loading { opacity: 0.6; cursor: not-allowed; }
+  .platform-btn.done { border-color: #22c55e44; color: #22c55e; }
+  .platform-icon { font-size: 16px; line-height: 1; }
+
+  /* ── Download buttons ── */
+  .download-row {
+    display: flex; gap: 6px;
+    padding: 0 14px 10px;
+  }
+  .dl-btn {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 7px 4px;
+    cursor: pointer;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+    color: #999;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .dl-btn:hover { background: #222; color: #fff; border-color: rgba(255,255,255,0.18); }
+
+  /* ── Share section ── */
+  .share-row {
+    display: flex; gap: 6px;
+    padding: 0 14px 8px;
+  }
+  .share-btn {
+    flex: 1;
+    border-radius: 8px;
+    padding: 9px 8px;
+    cursor: pointer;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.1em;
+    text-align: center;
+    transition: all 0.15s;
+    border: none;
+  }
+  .share-btn.primary { background: #fff; color: #000; }
+  .share-btn.primary:hover { background: #e5e5e5; }
+  .share-btn.secondary { background: #1a1a1a; color: #ccc; border: 1px solid rgba(255,255,255,0.12); }
+  .share-btn.secondary:hover { background: #222; color: #fff; }
+
+  /* ── Status message ── */
+  .share-status {
+    margin: 0 14px 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    background: rgba(34,197,94,0.12);
+    color: #22c55e;
+    border: 1px solid rgba(34,197,94,0.2);
+    display: none;
+    word-break: break-all;
+  }
+  .share-status.error { background: rgba(239,68,68,0.1); color: #f87171; border-color: rgba(239,68,68,0.2); }
+  .share-status.info { background: rgba(99,102,241,0.1); color: #a5b4fc; border-color: rgba(99,102,241,0.2); }
+
+  /* ── Progress bar ── */
+  .progress-wrap {
+    margin: 0 14px 8px;
+    display: none;
+  }
+  .progress-label {
+    font-size: 9px; color: #666; letter-spacing: 0.05em; margin-bottom: 4px;
+    display: flex; justify-content: space-between;
+  }
+  .progress-bar { height: 3px; background: #222; border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #6ee7b7, #38bdf8); border-radius: 2px; transition: width 0.3s; }
+
+  /* ── Extract another ── */
+  .extract-another {
+    padding: 8px 14px 10px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .extract-another button {
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 7px;
+    cursor: pointer;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+    color: #555;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+  .extract-another button:hover { border-color: rgba(255,255,255,0.2); color: #aaa; }
+
+  /* ── Empty / loading states ── */
+  .state-screen {
+    padding: 32px 20px;
+    text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .state-icon { font-size: 32px; }
+  .state-title { font-size: 13px; font-weight: 700; color: #e5e5e5; }
+  .state-desc { font-size: 10px; color: #666; line-height: 1.6; max-width: 260px; }
+  .extract-btn {
+    margin-top: 6px;
+    background: #fff; color: #000;
+    border: none; border-radius: 8px;
+    padding: 9px 20px;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.1em;
+    cursor: pointer; text-transform: uppercase;
+    transition: background 0.15s;
+  }
+  .extract-btn:hover { background: #e5e5e5; }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid rgba(255,255,255,0.1);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="logo-icon">🌉</div>
+    <div>
+      <div class="logo-text">Seamless Bridge</div>
+      <div class="logo-sub">AI Continuity Tool</div>
+    </div>
+  </div>
+  <div class="platform-badge" id="platform-badge">—</div>
+</div>
+
+<!-- Loading state -->
+<div class="state-screen" id="state-loading">
+  <div class="spinner"></div>
+  <div class="state-title">Reading page...</div>
+  <div class="state-desc">Extracting messages from this AI chat.</div>
+</div>
+
+<!-- No chat found state -->
+<div class="state-screen" id="state-empty" style="display:none">
+  <div class="state-icon">🔍</div>
+  <div class="state-title">No chat found</div>
+  <div class="state-desc">Open a ChatGPT, Claude, Gemini, Grok, or Perplexity conversation page, then click Extract.</div>
+  <button class="extract-btn" id="btn-retry">Extract Chat</button>
+</div>
+
+<!-- Main result view -->
+<div id="state-result" style="display:none">
+  <div class="status-bar">
+    <div class="status-dot green" id="status-dot"></div>
+    <span id="status-text"><span class="status-count" id="msg-count">0</span> messages extracted</span>
+  </div>
+  <div class="chat-title" id="chat-title">Untitled Chat</div>
+
+  <div class="content" id="content-scroll">
+    <div class="messages" id="messages-list"></div>
+
+    <!-- CONTINUE WITH -->
+    <div class="section-header">Continue With</div>
+    <div class="platform-grid" id="platform-grid">
+      <button class="platform-btn" data-platform="chatgpt" data-url="https://chatgpt.com/" data-label="ChatGPT">
+        <span class="platform-icon">🤖</span>ChatGPT
+      </button>
+      <button class="platform-btn" data-platform="claude" data-url="https://claude.ai/new" data-label="Claude">
+        <span class="platform-icon">🟠</span>Claude
+      </button>
+      <button class="platform-btn" data-platform="gemini" data-url="https://gemini.google.com/app" data-label="Gemini">
+        <span class="platform-icon">✦</span>Gemini
+      </button>
+      <button class="platform-btn" data-platform="perplexity" data-url="https://www.perplexity.ai/" data-label="Perplexity">
+        <span class="platform-icon">🔵</span>Perplexity
+      </button>
+      <button class="platform-btn" data-platform="grok" data-url="https://grok.com/" data-label="Grok">
+        <span class="platform-icon">𝕏</span>Grok
+      </button>
+      <button class="platform-btn" data-platform="deepseek" data-url="https://chat.deepseek.com/" data-label="DeepSeek">
+        <span class="platform-icon">🐋</span>DeepSeek
+      </button>
+    </div>
+
+    <!-- progress bar (shown while generating link) -->
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-label">
+        <span id="progress-label-text">Generating public link...</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+
+    <!-- status messages -->
+    <div class="share-status" id="share-status"></div>
+
+    <!-- DOWNLOAD -->
+    <div class="section-header">Download</div>
+    <div class="download-row">
+      <button class="dl-btn" id="dl-md">MD</button>
+      <button class="dl-btn" id="dl-txt">TXT</button>
+      <button class="dl-btn" id="dl-json">JSON</button>
+      <button class="dl-btn" id="dl-copy">Copy</button>
+    </div>
+
+    <!-- SHARE -->
+    <div class="section-header">Share</div>
+    <div class="share-row">
+      <button class="share-btn primary" id="public-link-btn">Get Public Link</button>
+      <button class="share-btn secondary" id="open-bridge-btn">Open in Bridge</button>
+    </div>
+  </div>
+
+  <div class="extract-another">
+    <button id="btn-reset">← Extract Another Chat</button>
+  </div>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

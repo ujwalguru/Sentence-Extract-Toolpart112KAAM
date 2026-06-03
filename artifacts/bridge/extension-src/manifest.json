@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "Seamless Bridge",
+  "version": "2.1",
+  "description": "Extract AI conversations and continue them in any LLM with a single click.",
+  "permissions": ["activeTab", "scripting", "storage", "clipboardWrite"],
+  "host_permissions": [
+    "*://chatgpt.com/*",
+    "*://chat.openai.com/*",
+    "*://claude.ai/*",
+    "*://gemini.google.com/*",
+    "*://aistudio.google.com/*",
+    "*://perplexity.ai/*",
+    "*://grok.com/*",
+    "*://x.com/*",
+    "*://deepseek.com/*",
+    "*://chat.mistral.ai/*",
+    "*://copilot.microsoft.com/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Seamless Bridge"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://chatgpt.com/*",
+        "*://chat.openai.com/*",
+        "*://claude.ai/*",
+        "*://gemini.google.com/*",
+        "*://aistudio.google.com/*",
+        "*://perplexity.ai/*",
+        "*://grok.com/*",
+        "*://x.com/*",
+        "*://deepseek.com/*",
+        "*://chat.mistral.ai/*",
+        "*://copilot.microsoft.com/*"
+      ],
+      "js": ["content-ai.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
