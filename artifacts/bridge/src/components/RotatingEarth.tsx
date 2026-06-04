@@ -189,15 +189,17 @@ export default function RotatingEarth({ width = 800, height = 600, className = "
       }
     }
 
-    /* ── Rotation loop: cap at ~30fps (globe rotates slowly, no need for 60) ── */
+    /* ── Rotation loop: cap at ~30fps, pause when off-screen ── */
     const rotation: [number, number, number] = [0, 0, 0]
-    let autoRotate   = true
+    let autoRotate    = true
+    let isVisible     = true
     const rotationSpeed = 0.5
-    const FPS_CAP    = 30
+    const FPS_CAP     = 30
     const MS_PER_FRAME = 1000 / FPS_CAP
     let lastFrameTime = 0
 
     const rotate = (elapsed: number) => {
+      if (!isVisible) return
       if (elapsed - lastFrameTime < MS_PER_FRAME) return
       lastFrameTime = elapsed
       if (autoRotate) {
@@ -208,6 +210,13 @@ export default function RotatingEarth({ width = 800, height = 600, className = "
     }
 
     const rotationTimer = d3.timer(rotate)
+
+    /* ── Intersection Observer: pause when scrolled out of view ── */
+    const observer = new IntersectionObserver(
+      (entries) => { isVisible = entries[0].isIntersecting },
+      { threshold: 0.05 }
+    )
+    observer.observe(canvas)
 
     /* ── Drag ── */
     const handleMouseDown = (event: MouseEvent) => {
@@ -277,6 +286,7 @@ export default function RotatingEarth({ width = 800, height = 600, className = "
 
     return () => {
       rotationTimer.stop()
+      observer.disconnect()
       mql.removeEventListener('change', onSchemeChange)
       canvas.removeEventListener("mousedown", handleMouseDown)
       canvas.removeEventListener("touchstart", handleTouchStart)
