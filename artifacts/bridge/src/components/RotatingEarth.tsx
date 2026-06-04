@@ -21,14 +21,14 @@ export default function RotatingEarth({ width = 800, height = 600, className = "
     const context = canvas.getContext("2d")
     if (!context) return
 
-    const containerWidth = Math.min(width, window.innerWidth - 40)
+    const containerWidth  = Math.min(width, window.innerWidth - 40)
     const containerHeight = Math.min(height, window.innerHeight - 100)
     const radius = Math.min(containerWidth, containerHeight) / 2.5
 
     const dpr = window.devicePixelRatio || 1
-    canvas.width = containerWidth * dpr
+    canvas.width  = containerWidth * dpr
     canvas.height = containerHeight * dpr
-    canvas.style.width = `${containerWidth}px`
+    canvas.style.width  = `${containerWidth}px`
     canvas.style.height = `${containerHeight}px`
     context.scale(dpr, dpr)
 
@@ -40,6 +40,18 @@ export default function RotatingEarth({ width = 800, height = 600, className = "
 
     const path = d3.geoPath().projection(projection).context(context)
 
+    /* ── Cache expensive objects ─────────────────────────────── */
+    const graticule = d3.geoGraticule()()   // created ONCE, reused every frame
+
+    /* ── Dark-mode: read once, re-check only on media change ── */
+    let isDark = document.documentElement.classList.contains('dark')
+    const mql = window.matchMedia('(prefers-color-scheme: dark)')
+    const onSchemeChange = () => {
+      isDark = document.documentElement.classList.contains('dark') || mql.matches
+    }
+    mql.addEventListener('change', onSchemeChange)
+
+    /* ── Point-in-polygon helpers ────────────────────────────── */
     const pointInPolygon = (point: [number, number], polygon: number[][]): boolean => {
       const [x, y] = point
       let inside = false
@@ -56,10 +68,10 @@ export default function RotatingEarth({ width = 800, height = 600, className = "
     const pointInFeature = (point: [number, number], feature: any): boolean => {
       const geometry = feature.geometry
       if (geometry.type === "Polygon") {
-        const coordinates = geometry.coordinates
-        if (!pointInPolygon(point, coordinates[0])) return false
-        for (let i = 1; i < coordinates.length; i++) {
-          if (pointInPolygon(point, coordinates[i])) return false
+        const coords = geometry.coordinates
+        if (!pointInPolygon(point, coords[0])) return false
+        for (let i = 1; i < coords.length; i++) {
+          if (pointInPolygon(point, coords[i])) return false
         }
         return true
       } else if (geometry.type === "MultiPolygon") {
@@ -85,81 +97,89 @@ export default function RotatingEarth({ width = 800, height = 600, className = "
       for (let lng = minLng; lng <= maxLng; lng += stepSize) {
         for (let lat = minLat; lat <= maxLat; lat += stepSize) {
           const point: [number, number] = [lng, lat]
-          if (pointInFeature(point, feature)) {
-            dots.push(point)
-          }
+          if (pointInFeature(point, feature)) dots.push(point)
         }
       }
       return dots
     }
 
-    interface DotData { lng: number; lat: number; visible: boolean }
-    const allDots: DotData[] = []
-    let landFeatures: any
+    /* lat/lng stored as flat array pairs for cache efficiency */
+    const allDots: Float32Array[] = []   // each entry = [lng, lat]
 
     const render = () => {
       context.clearRect(0, 0, containerWidth, containerHeight)
       const currentScale = projection.scale()
-      const scaleFactor = currentScale / radius
-      const isDark = canvas.closest('.dark') !== null
-      const strokeColor = isDark ? "#ffffff" : "#000000"
+      const scaleFactor  = currentScale / radius
+      const strokeColor  = isDark ? "#ffffff" : "#000000"
 
+      /* Globe outline */
       context.beginPath()
       context.arc(containerWidth / 2, containerHeight / 2, currentScale, 0, 2 * Math.PI)
-      context.fillStyle = "rgba(0, 0, 0, 0)"
+      context.fillStyle   = "rgba(0,0,0,0)"
       context.fill()
       context.strokeStyle = strokeColor
-      context.lineWidth = 1 * scaleFactor
+      context.lineWidth   = 1 * scaleFactor
       context.globalAlpha = isDark ? 0.1 : 0.2
       context.stroke()
       context.globalAlpha = 1
 
-      if (landFeatures) {
-        const graticule = d3.geoGraticule()
-        context.beginPath()
-        path(graticule())
-        context.strokeStyle = strokeColor
-        context.lineWidth = 1 * scaleFactor
-        context.globalAlpha = isDark ? 0.05 : 0.1
-        context.stroke()
-        context.globalAlpha = 1
+      /* Graticule — pre-built object, no allocation */
+      context.beginPath()
+      path(graticule)
+      context.strokeStyle = strokeColor
+      context.lineWidth   = 1 * scaleFactor
+      context.globalAlpha = isDark ? 0.05 : 0.1
+      context.stroke()
+      context.globalAlpha = 1
 
-        context.beginPath()
-        landFeatures.features.forEach((feature: any) => { path(feature) })
-        context.strokeStyle = strokeColor
-        context.lineWidth = 1 * scaleFactor
-        context.globalAlpha = isDark ? 0.2 : 0.4
-        context.stroke()
-        context.globalAlpha = 1
+      /* Land outlines */
+      context.beginPath()
+      for (const f of landFeaturesList) path(f)
+      context.strokeStyle = strokeColor
+      context.lineWidth   = 1 * scaleFactor
+      context.globalAlpha = isDark ? 0.2 : 0.4
+      context.stroke()
+      context.globalAlpha = 1
 
-        allDots.forEach((dot) => {
-          const projected = projection([dot.lng, dot.lat])
-          if (
-            projected &&
-            projected[0] >= 0 && projected[0] <= containerWidth &&
-            projected[1] >= 0 && projected[1] <= containerHeight
-          ) {
-            context.beginPath()
-            context.arc(projected[0], projected[1], 1 * scaleFactor, 0, 2 * Math.PI)
-            context.fillStyle = "#3b82f6"
-            context.globalAlpha = 0.8
-            context.fill()
-            context.globalAlpha = 1
-          }
-        })
+      /* ── Dots: ONE beginPath → many arc() → ONE fill ── */
+      const dotR = 1 * scaleFactor
+      context.beginPath()
+      for (const pair of allDots) {
+        const projected = projection([pair[0], pair[1]])
+        if (
+          projected &&
+          projected[0] >= 0 && projected[0] <= containerWidth &&
+          projected[1] >= 0 && projected[1] <= containerHeight
+        ) {
+          context.moveTo(projected[0] + dotR, projected[1])
+          context.arc(projected[0], projected[1], dotR, 0, 2 * Math.PI)
+        }
       }
+      context.fillStyle   = "#3b82f6"
+      context.globalAlpha = 0.8
+      context.fill()
+      context.globalAlpha = 1
     }
+
+    let landFeaturesList: any[] = []
 
     const loadWorldData = async () => {
       try {
         setIsLoading(true)
         const response = await fetch("/world.geo.json")
         if (!response.ok) throw new Error("Failed to load land data")
-        landFeatures = await response.json()
-        landFeatures.features.forEach((feature: any) => {
+        const landFeatures = await response.json()
+        landFeaturesList = landFeatures.features
+
+        for (const feature of landFeatures.features) {
           const dots = generateDotsInPolygon(feature, 24)
-          dots.forEach(([lng, lat]) => { allDots.push({ lng, lat, visible: true }) })
-        })
+          for (const [lng, lat] of dots) {
+            const pair = new Float32Array(2)
+            pair[0] = lng
+            pair[1] = lat
+            allDots.push(pair)
+          }
+        }
         render()
         setIsLoading(false)
       } catch (err) {
@@ -169,88 +189,83 @@ export default function RotatingEarth({ width = 800, height = 600, className = "
       }
     }
 
+    /* ── Rotation loop: cap at ~30fps (globe rotates slowly, no need for 60) ── */
     const rotation: [number, number, number] = [0, 0, 0]
-    let autoRotate = true
+    let autoRotate   = true
     const rotationSpeed = 0.5
+    const FPS_CAP    = 30
+    const MS_PER_FRAME = 1000 / FPS_CAP
+    let lastFrameTime = 0
 
-    const rotate = () => {
+    const rotate = (elapsed: number) => {
+      if (elapsed - lastFrameTime < MS_PER_FRAME) return
+      lastFrameTime = elapsed
       if (autoRotate) {
         rotation[0] += rotationSpeed
-        projection.rotate(rotation as [number, number, number])
+        projection.rotate(rotation)
         render()
       }
     }
 
     const rotationTimer = d3.timer(rotate)
 
+    /* ── Drag ── */
     const handleMouseDown = (event: MouseEvent) => {
       autoRotate = false
-      const startX = event.clientX
-      const startY = event.clientY
+      const startX = event.clientX, startY = event.clientY
       const startRotation = [...rotation]
 
-      const handleMouseMove = (moveEvent: MouseEvent) => {
+      const handleMouseMove = (e: MouseEvent) => {
         const sensitivity = 0.5
-        const dx = moveEvent.clientX - startX
-        const dy = moveEvent.clientY - startY
-        rotation[0] = startRotation[0] + dx * sensitivity
-        rotation[1] = startRotation[1] - dy * sensitivity
-        rotation[1] = Math.max(-90, Math.min(90, rotation[1]))
-        projection.rotate(rotation as [number, number, number])
+        rotation[0] = startRotation[0] + (e.clientX - startX) * sensitivity
+        rotation[1] = Math.max(-90, Math.min(90, startRotation[1] - (e.clientY - startY) * sensitivity))
+        projection.rotate(rotation)
         render()
       }
-
       const handleMouseUp = () => {
         document.removeEventListener("mousemove", handleMouseMove)
         document.removeEventListener("mouseup", handleMouseUp)
         setTimeout(() => { autoRotate = true }, 10)
       }
-
       document.addEventListener("mousemove", handleMouseMove)
       document.addEventListener("mouseup", handleMouseUp)
     }
 
+    /* ── Touch ── */
     const handleTouchStart = (event: TouchEvent) => {
       autoRotate = false
-      if (event.touches.length === 0) return
+      if (!event.touches.length) return
       const touch = event.touches[0]
-      const startX = touch.clientX
-      const startY = touch.clientY
+      const startX = touch.clientX, startY = touch.clientY
       const startRotation = [...rotation]
 
-      const handleTouchMove = (moveEvent: TouchEvent) => {
-        if (moveEvent.touches.length === 0) return
-        const t = moveEvent.touches[0]
-        const dx = t.clientX - startX
-        const dy = t.clientY - startY
-        if (Math.abs(dx) > Math.abs(dy) && moveEvent.cancelable) {
-          moveEvent.preventDefault()
-        }
-        const sensitivity = 0.5
-        rotation[0] = startRotation[0] + dx * sensitivity
-        rotation[1] = startRotation[1] - dy * sensitivity
-        rotation[1] = Math.max(-90, Math.min(90, rotation[1]))
-        projection.rotate(rotation as [number, number, number])
+      const handleTouchMove = (e: TouchEvent) => {
+        if (!e.touches.length) return
+        const t = e.touches[0]
+        const dx = t.clientX - startX, dy = t.clientY - startY
+        if (Math.abs(dx) > Math.abs(dy) && e.cancelable) e.preventDefault()
+        const s = 0.5
+        rotation[0] = startRotation[0] + dx * s
+        rotation[1] = Math.max(-90, Math.min(90, startRotation[1] - dy * s))
+        projection.rotate(rotation)
         render()
       }
-
       const handleTouchEnd = () => {
         document.removeEventListener("touchmove", handleTouchMove)
         document.removeEventListener("touchend", handleTouchEnd)
         document.removeEventListener("touchcancel", handleTouchEnd)
         setTimeout(() => { autoRotate = true }, 10)
       }
-
       document.addEventListener("touchmove", handleTouchMove, { passive: false })
       document.addEventListener("touchend", handleTouchEnd)
       document.addEventListener("touchcancel", handleTouchEnd)
     }
 
+    /* ── Zoom ── */
     const handleWheel = (event: WheelEvent) => {
       event.preventDefault()
-      const scaleFactor = event.deltaY > 0 ? 0.9 : 1.1
-      const newRadius = Math.max(radius * 0.5, Math.min(radius * 3, projection.scale() * scaleFactor))
-      projection.scale(newRadius)
+      const factor = event.deltaY > 0 ? 0.9 : 1.1
+      projection.scale(Math.max(radius * 0.5, Math.min(radius * 3, projection.scale() * factor)))
       render()
     }
 
@@ -262,6 +277,7 @@ export default function RotatingEarth({ width = 800, height = 600, className = "
 
     return () => {
       rotationTimer.stop()
+      mql.removeEventListener('change', onSchemeChange)
       canvas.removeEventListener("mousedown", handleMouseDown)
       canvas.removeEventListener("touchstart", handleTouchStart)
       canvas.removeEventListener("wheel", handleWheel)
@@ -281,6 +297,11 @@ export default function RotatingEarth({ width = 800, height = 600, className = "
 
   return (
     <div className={`relative ${className}`}>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-2 border-blue-500/30 border-t-blue-500 animate-spin" />
+        </div>
+      )}
       <canvas
         ref={canvasRef}
         className="w-full h-auto cursor-grab active:cursor-grabbing"
