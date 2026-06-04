@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Activity, Users, Heart } from 'lucide-react';
 import RotatingEarth from './RotatingEarth';
-import { MANUAL_DONATIONS } from '../App';
+import { MANUAL_DONATIONS } from '../constants';
 
 const API_BASE = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '');
 

@@ -18,15 +18,10 @@ import { PdfEditor } from './components/PdfEditor';
 import { ContinueModal } from './components/ContinueModal';
 import { vaultDbTools } from './lib/vaultDb';
 import { Toaster, toast } from 'sonner';
+import { STAT_BASES, MANUAL_DONATIONS } from './constants';
 
 const API_BASE = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '');
 const apiUrl = (path: string) => `${API_BASE}${path}`;
-
-export const STAT_BASES = {
-  visitors: 15420,
-  uses: 8940
-};
-export const MANUAL_DONATIONS = 0;
 
 const DB_NAME = 'BridgeDB';
 const STORE_NAME = 'drafts';
@@ -630,11 +625,9 @@ export default function App() {
       {chatData && <ContinueModal isOpen={showContinueModal} onClose={() => setShowContinueModal(false)} chatData={chatData} />}
       {showPdfEditor && chatData && <PdfEditor chatData={chatData} onClose={() => setShowPdfEditor(false)} />}
 
-      {/* Background gradient */}
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-50 dark:opacity-[0.15]">
-        <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
-          <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#8086ff] to-[#80ffc7] opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" style={{ clipPath: 'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)' }}></div>
-        </div>
+      {/* Background gradient — static, no blur filter */}
+      <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-violet-500/5 via-teal-500/3 to-transparent dark:from-violet-500/[0.04] dark:via-transparent" />
       </div>
 
       {/* Header */}
@@ -642,7 +635,7 @@ export default function App() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.18, ease: 'easeOut' }}
-        className="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 md:px-12 py-4 sm:py-6 border-b border-zinc-200/50 dark:border-white/5 backdrop-blur-xl bg-white/70 dark:bg-black/50 shrink-0 shadow-sm"
+        className="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 md:px-12 py-4 sm:py-6 border-b border-zinc-200/50 dark:border-white/[0.07] bg-white dark:bg-[#0a0a0a] shrink-0 shadow-sm"
       >
         <button onClick={() => setCurrentTab('converter')} className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity">
           <div className="w-11 h-11 bg-black dark:bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
@@ -771,13 +764,13 @@ export default function App() {
                 <motion.div key="input" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2, delay: 0.1, ease: [0.16, 1, 0.3, 1] }} className="w-full flex flex-col items-center group/container">
                   <div className="w-full max-w-2xl border border-zinc-200/50 dark:border-transparent p-[1.5px] bg-zinc-200/50 dark:bg-zinc-800/50 mb-12 rounded-2xl shadow-2xl overflow-hidden relative isolate transform-gpu">
                     <div className="absolute inset-0 z-0 overflow-hidden rounded-2xl">
-                      <div className="absolute inset-[-150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300%] h-[300%] animate-[spin_5s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#00000000_0%,#00000000_50%,#18181b_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#00000000_0%,#00000000_50%,#ffffff_100%)] opacity-30 group-hover/container:opacity-100 transition-opacity duration-700"></div>
+                      <div className="absolute inset-[-150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300%] h-[300%] bg-[conic-gradient(from_90deg_at_50%_50%,#00000000_0%,#00000000_50%,#18181b_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#00000000_0%,#00000000_50%,#ffffff_100%)] opacity-0 group-hover/container:opacity-100 group-hover/container:animate-[spin_5s_linear_infinite] transition-opacity duration-500"></div>
                     </div>
                     <div className="absolute inset-[1.5px] bg-white dark:bg-[#0a0a0a] rounded-2xl z-10 pointer-events-none"></div>
 
                     <div className="flex flex-col p-6 rounded-xl border border-zinc-200/50 dark:border-white/5 bg-white dark:bg-zinc-950 w-full relative z-20 shadow-[0_0_40px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_0_40px_-15px_rgba(255,255,255,0.05)]">
                       <div className="flex justify-center mb-8">
-                        <div className="flex bg-zinc-100/80 dark:bg-zinc-900/80 rounded-lg p-1 backdrop-blur-md border border-zinc-200/50 dark:border-white/5">
+                        <div className="flex bg-zinc-100 dark:bg-zinc-900 rounded-lg p-1 border border-zinc-200/50 dark:border-white/5">
                           <button onClick={() => setInputMode('link')} className={`px-6 py-2 text-[10px] font-bold uppercase tracking-[0.15em] rounded-md transition-all ${inputMode === 'link' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm ring-1 ring-zinc-200/50 dark:ring-white/10' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>Share Link</button>
                           <button onClick={() => setInputMode('file')} className={`px-6 py-2 text-[10px] font-bold uppercase tracking-[0.15em] rounded-md transition-all ${inputMode === 'file' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm ring-1 ring-zinc-200/50 dark:ring-white/10' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}>HTML File</button>
                         </div>
@@ -1221,7 +1214,7 @@ export default function App() {
         )}
       </main>
 
-      <footer className="px-4 sm:px-6 md:px-12 py-6 sm:py-8 border-t border-zinc-200/50 dark:border-white/5 flex flex-col md:flex-row gap-4 justify-between items-center bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-xl mt-auto shrink-0 z-10 relative">
+      <footer className="px-4 sm:px-6 md:px-12 py-6 sm:py-8 border-t border-zinc-200/50 dark:border-white/[0.07] flex flex-col md:flex-row gap-4 justify-between items-center bg-white dark:bg-[#0a0a0a] mt-auto shrink-0 z-10 relative">
         <div className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-mono flex items-center gap-2">
           System Status: <span className="flex items-center gap-1.5 text-zinc-900 dark:text-white font-bold"><span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> Operational</span> <span className="opacity-50">•</span> V2.0-Alpha
         </div>
