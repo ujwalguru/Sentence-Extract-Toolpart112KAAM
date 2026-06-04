@@ -639,11 +639,10 @@ export default function App() {
 
       {/* Header */}
       <motion.header
-        initial={{ opacity: 0, y: -12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
         className="sticky top-0 z-50 flex items-center justify-between px-4 sm:px-6 md:px-12 py-4 sm:py-6 border-b border-zinc-200/50 dark:border-white/5 backdrop-blur-xl bg-white/70 dark:bg-black/50 shrink-0 shadow-sm"
-        style={{ willChange: 'transform, opacity' }}
       >
         <button onClick={() => setCurrentTab('converter')} className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity">
           <div className="w-11 h-11 bg-black dark:bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 overflow-hidden">
@@ -688,30 +687,29 @@ export default function App() {
           : currentTab === 'extension' ? <ExtensionPage />
           : (
           <>
-            <motion.div
-              className="w-full max-w-2xl text-center mb-0 relative"
-              initial="hidden"
-              animate="show"
-              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09 } } }}
-            >
+            <div className="w-full max-w-2xl text-center mb-0 relative">
               <motion.h1
                 className="text-4xl md:text-6xl font-extrabold tracking-tighter mb-6 bg-clip-text text-transparent bg-gradient-to-b from-zinc-900 to-zinc-500 dark:from-white dark:to-zinc-500"
-                variants={{ hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 320, damping: 28 } } }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               >
                 Seamless AI Continuity
               </motion.h1>
               <motion.p
                 className="text-zinc-600 dark:text-zinc-400 text-sm md:text-base tracking-wide max-w-lg mx-auto leading-relaxed mb-2"
-                variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 26 } } }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
               >
                 Upload an exported HTML chat or paste a Share Link to bridge the gap between different LLMs flawlessly.
               </motion.p>
-            </motion.div>
+            </div>
 
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.18, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2, delay: 0.08 }}
             >
               <AILogoMarquee />
             </motion.div>
@@ -770,7 +768,7 @@ export default function App() {
                   </div>
                 </motion.div>
               ) : !chatData ? (
-                <motion.div key="input" initial={{ opacity: 0, y: 24, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.98 }} transition={{ delay: 0.26, type: 'spring', stiffness: 280, damping: 26 }} className="w-full flex flex-col items-center group/container">
+                <motion.div key="input" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2, delay: 0.1, ease: [0.16, 1, 0.3, 1] }} className="w-full flex flex-col items-center group/container">
                   <div className="w-full max-w-2xl border border-zinc-200/50 dark:border-transparent p-[1.5px] bg-zinc-200/50 dark:bg-zinc-800/50 mb-12 rounded-2xl shadow-2xl overflow-hidden relative isolate transform-gpu">
                     <div className="absolute inset-0 z-0 overflow-hidden rounded-2xl">
                       <div className="absolute inset-[-150%] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300%] h-[300%] animate-[spin_5s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#00000000_0%,#00000000_50%,#18181b_100%)] dark:bg-[conic-gradient(from_90deg_at_50%_50%,#00000000_0%,#00000000_50%,#ffffff_100%)] opacity-30 group-hover/container:opacity-100 transition-opacity duration-700"></div>

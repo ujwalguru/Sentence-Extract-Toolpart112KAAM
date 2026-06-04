@@ -368,23 +368,14 @@ export function ContinueModal({ isOpen, onClose, chatData }: ContinueModalProps)
                 ) : (
                   <motion.div
                     className="grid grid-cols-2 gap-2"
-                    initial="hidden"
-                    animate="show"
-                    variants={{
-                      hidden: {},
-                      show: { transition: { staggerChildren: 0.035 } },
-                    }}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
                   >
                     {filtered.map(platform => (
-                      <motion.div
-                        key={platform.id}
-                        variants={{
-                          hidden: { opacity: 0, y: 6 },
-                          show:   { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 400, damping: 28 } },
-                        }}
-                      >
+                      <div key={platform.id}>
                         <PlatformCard {...cardProps(platform)} />
-                      </motion.div>
+                      </div>
                     ))}
                   </motion.div>
                 )}
