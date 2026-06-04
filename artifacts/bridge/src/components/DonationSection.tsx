@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Heart, Lock, Users, Code, Globe, Mail, 
   ChevronDown, Check, Github, Twitter, HeartHandshake, Sparkles 
 } from 'lucide-react';
-import { LiveGlobeSection } from './LiveGlobeSection';
+
+/* Lazy-load the globe + its 14MB GeoJSON only when near the viewport */
+const LazyGlobe = React.lazy(() =>
+  import('./LiveGlobeSection').then(m => ({ default: m.LiveGlobeSection }))
+);
 
 const baseInrAmounts = [
   { value: 30, label: "Thank you!" },
@@ -15,6 +19,20 @@ const baseInrAmounts = [
 ];
 
 export function DonationSection() {
+  /* ── Lazy-mount globe only when user scrolls near it ── */
+  const globeSentinelRef = useRef<HTMLDivElement>(null);
+  const [showGlobe, setShowGlobe] = useState(false);
+  useEffect(() => {
+    const el = globeSentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) { setShowGlobe(true); obs.disconnect(); } },
+      { rootMargin: '300px' }   // start loading 300px before it enters view
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
   const [selectedBaseAmount, setSelectedBaseAmount] = useState<number | null>(50);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [currencySymbol, setCurrencySymbol] = useState<string>('₹');
@@ -316,7 +334,15 @@ export function DonationSection() {
           </div>
         </div>
 
-        <LiveGlobeSection />
+        {/* Sentinel triggers load 300px before globe scrolls into view */}
+        <div ref={globeSentinelRef} />
+        <Suspense fallback={
+          <div className="w-full max-w-6xl mx-auto mt-12 mb-16 h-64 rounded-[2rem] bg-zinc-100 dark:bg-white/5 border border-zinc-200 dark:border-white/10 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full border-2 border-blue-500/30 border-t-blue-500 animate-spin" />
+          </div>
+        }>
+          {showGlobe && <LazyGlobe />}
+        </Suspense>
 
       </div>
 
